@@ -13,7 +13,7 @@ orbs:
   node: circleci/node@0.0.6
 
 jobs:
-  build_test_release:
+  build:
     executor: node/node
     steps:
       - checkout
@@ -32,8 +32,3 @@ jobs:
           <<: *yarn_cache
           paths:
             - ~/.cache/yarn
-
-workflows:
-  build_test_release:
-    jobs:
-      - build_test_release
