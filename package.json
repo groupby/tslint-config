@@ -1,6 +1,6 @@
 {
   "name": "tslint-config-groupby",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "description": "A TSLint config for GroupBy's style",
   "main": "tslint.js",
   "files": [
