@@ -1,40 +1,89 @@
-version: 2.1
-
 defaults:
+  image: &image
+    docker:
+      - image: circleci/node:11.6.0
   yarn_cache: &yarn_cache
-    key: yarn_cache-v1-{{ checksum "yarn.lock" }}-{{ .Branch }}
-  yarn_cache_keys: &yarn_cache_keys
-    keys:
-      - yarn_cache-v1-{{ checksum "yarn.lock" }}-{{ .Branch }}
-      - yarn_cache-v1-{{ checksum "yarn.lock" }}
-      - yarn_cache-v1
+    key: yarn_cache-v{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ checksum "yarn.lock" }}
+  yarn_install: &yarn_install
+    name: Install
+    command: yarn
+  setup_git: &setup_git
+    name: Setup Git user
+    command: |
+      git config --global user.email "ops@groupbyinc.com"
+      git config --global user.name "GroupBy Ops"
+      git config --global push.default simple
 
-orbs:
-  node: circleci/node@0.0.6
+      cp .circleci/prepare-commit-msg .git/hooks/prepare-commit-msg
+      chmod +x .git/hooks/prepare-commit-msg
+  persist_repo: &persist_repo
+    root: ~/
+    paths:
+      - project
+
+version: 2
 
 jobs:
-  build_test_release:
-    executor: node/node
+  release:
+    <<: *image
     steps:
       - checkout
-      - restore_cache:
-          <<: *yarn_cache_keys
+      - attach_workspace:
+          at: ~/
+      - restore_cache: *yarn_cache
+      - run: *yarn_install
+      - run: *setup_git
       - run:
-          name: Build
-          command: yarn
-      - run:
-          name: Test
-          command: yarn start lint
+          name: Install dependencies
+          command: sudo apt install -y ed
       - run:
           name: Release
-          command: yarn semantic-release || true
-      - save_cache:
-          <<: *yarn_cache
-          paths:
-            - ~/.cache/yarn
+          command: |
+            if ./scripts/release.sh; then
+              exit_code=0
+            elif ec=$?; (( ec == 4 )); then
+              exit_code=0
+            else
+              exit_code=$ec
+            fi
+
+            exit $exit_code
+      - persist_to_workspace: *persist_repo
+
+  publish:
+    <<: *image
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install utilities
+          command: sudo apt install jq
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+      - run:
+          name: Publish
+          command: |
+            if ! npm view ".@$(jq -r .version package.json)" | grep -q .; then
+              ./scripts/publish.sh
+            else
+              echo "Nothing to publish."
+            fi
 
 workflows:
-  build_test_release:
+  version: 2
+
+  release:
     jobs:
-      - build_test_release:
+      - release:
           context: org-global
+          filters:
+            branches:
+              only: master
+      - publish:
+          context: org-global
+          filters:
+            branches:
+              only: master
+          requires:
+            - release

@@ -9,12 +9,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "start": "start-runner -p re-start",
-    "prepush": "yarn start lint",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
-  },
-  "release": {
-    "verifyConditions": "condition-circle"
+    "prepush": "yarn lint",
+    "lint": "eslint tslint.js"
   },
   "repository": {
     "type": "git",
@@ -38,23 +34,10 @@
   },
   "homepage": "https://github.com/groupby/tslint-config",
   "devDependencies": {
-    "condition-circle": "^1.5.0",
-    "cz-conventional-changelog": "^1.2.0",
-    "husky": "^0.13.0",
-    "re-start": "^1.1.1",
-    "semantic-release": "^6.3.2",
-    "semistandard": "^9.2.1",
-    "start-simple-cli": "^4.1.1"
+    "eslint": "^5.16.0",
+    "husky": "^0.13.0"
   },
   "dependencies": {
     "tslint-eslint-rules": "^3.2.3"
-  },
-  "config": {
-    "restart": {
-      "lintOpts": "semistandard"
-    },
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
   }
 }
