@@ -40,7 +40,9 @@ module.exports = {
     'no-trailing-whitespace': true,
     'arrow-parens': true,
     'class-name': true,
-    'comment-format': [true, 'check-space', 'check-lowercase'],
+    'comment-format': [true, 'check-space', 'check-lowercase', {
+      'ignore-words': ['TODO', 'FIXME', 'XXX', 'NOTE']
+    }],
     'interface-name': [true, 'never-prefix'],
     'jsdoc-format': true,
     'new-parens': true,
